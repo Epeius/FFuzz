@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.11: http://docutils.sourceforge.net/" />
+<title>Testing S2E</title>
+<link rel="stylesheet" href="./s2e.css" type="text/css" />
+</head>
+<body>
+<div class="document" id="testing-s2e">
+<h1 class="title">Testing S2E</h1>
+
+<div class="section" id="building-the-test-suite">
+<h1>1. Building the test suite</h1>
+<blockquote>
+<pre class="literal-block">
+$ mkdir $S2EDIR/build
+$ cd $S2EDIR/build
+$ make -f ../s2e/Makefile all-testsuite
+</pre>
+</blockquote>
+</div>
+<div class="section" id="running-the-test-suite">
+<h1>2. Running the test suite</h1>
+<blockquote>
+<p>The following commands run unit tests and generate a coverage report</p>
+<pre class="literal-block">
+$ cd $S2EDIR/build/testsuite-debug
+$ make ENABLE_OPTIMIZED=0 unitcheck
+$ make ENABLE_OPTIMIZED=0 coverage-report
+</pre>
+<p>The coverage report is in <tt class="docutils literal"><span class="pre">$S2EDIR/build/testsuite-debug/coverage/index.html</span></tt></p>
+</blockquote>
+</div>
+</div>
+<div class="footer">
+<hr class="footer" />
+<a class="reference external" href="TestingS2E.rst">View document source</a>.
+
+</div>
+</body>
+</html>

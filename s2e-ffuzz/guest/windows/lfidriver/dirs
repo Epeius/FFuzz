@@ -1,0 +1,4 @@
+DIRS= \
+     driver \
+     testctl \
+     libs2e \

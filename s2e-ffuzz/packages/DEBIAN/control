@@ -1,0 +1,11 @@
+Package: cyberhaven-s2e-qemu
+Source: s2e
+Version: 1.0
+Architecture: amd64
+Maintainer: Vitaly Chipounov <vitaly.chipounov@epfl.ch>
+Installed-Size: 1
+Depends: libgettextpo0 (>= 0.18.1.1),  python-twisted-web (>= 11.1.0-1), libmemcached6 (>= 0.44-1), memcached (>= 1.4.13-0), binutils (>= 2.22), libboost-system1.46.1 (>= 1.46.1-1), libboost-serialization1.46.1 (>= 1.46.1-1), libc6 (>= 2.15), libc6-i386 (>= 2.4), libelf1 (>= 0.131), libgcc1 (>= 1:4.1.1), libglib2.0-0 (>= 2.24.0), liblua5.1-0, libncurses5 (>= 5.5-5~), libpng12-0 (>= 1.2.13-4), libsdl1.2debian (>= 1.2.10-1), libstdc++6 (>= 4.6), libtinfo5, libx11-6, zlib1g (>= 1:1.1.4)
+Section: dslab
+Priority: optional
+Homepage: https://s2e.epfl.ch
+Description: CyberHaven S2E binary package

@@ -1,0 +1,17 @@
+USER_C_FLAGS=/wd4201
+TARGETNAME=lfidriver
+TARGETPATH=obj
+TARGETTYPE=DRIVER
+
+SOURCES=main.c drvsymbhw.c watchdog.c crash.c monitor_gen.c monitor_common.c\
+        winxp-ndis-miniport.c winxp-ndis-protocol.c winxp-ntoskrnl.c \
+        ndis_entrypoints.c ndis_miniport_entrypoints.c \
+	winxp-ndis-miniport-custom.c \
+	winxp-usb.c filter.c\
+	driver_entrypoints.c kernel_hooks.c
+
+!include $(DDK_TARGET_OS).inc
+
+INCLUDES=..\libs2e
+C_DEFINES=-DUNICODE -DSTRICT
+TARGETLIBS=$(DDK_LIB_PATH)\ndis.lib ..\libs2e\obj$(BUILD_ALT_DIR)\*\libs2e.lib $(DDK_LIB_PATH)\wdmsec.lib $(DDK_LIB_PATH)\Aux_klib.lib $(IFSKIT_LIB_PATH)\fltMgr.lib

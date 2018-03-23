@@ -1,0 +1,249 @@
+include config.mak
+
+AS := nasm
+
+VPATH := $(SRC_DIR)
+
+S2E_SOURCES = s2e/AddressSpaceCache.cpp         \
+             s2e/ConfigFile.cpp                 \
+             s2e/ExprInterface.cpp              \
+             s2e/MMUFunctionHandlers.cpp        \
+             s2e/Plugin.cpp                     \
+             s2e/PluginManager.cpp              \
+             s2e/CorePluginInterface.cpp        \
+             s2e/S2E.cpp                        \
+             s2e/Utils.cpp                      \
+             s2e/S2EDeviceState.cpp             \
+             s2e/S2EExecutionState.cpp          \
+             s2e/S2EExecutionStateMemory.cpp    \
+             s2e/S2EExecutionStateRegisters.cpp \
+             s2e/S2EExecutionStateTlb.cpp       \
+             s2e/S2EExecutor.cpp                \
+             s2e/S2EStatsTracker.cpp            \
+             s2e/SymbolicHardwareHook.cpp       \
+             s2e/Synchronization.cpp            \
+             s2e/Plugins/CorePlugin.cpp         \
+             s2e/Signals/signals.cpp            \
+             s2e/s2e-qmp.cpp
+
+# Core plugins
+S2E_PLUGINS = s2e/Plugins/BaseInstructions.cpp
+S2E_PLUGINS += s2e/Plugins/HostFiles.cpp
+S2E_PLUGINS += s2e/Plugins/Vmi.cpp
+S2E_PLUGINS += s2e/Plugins/OSMonitor.cpp
+S2E_PLUGINS += s2e/Plugins/ModuleExecutionDetector.cpp
+S2E_PLUGINS += s2e/Plugins/ProcessExecutionDetector.cpp
+S2E_PLUGINS += s2e/Plugins/ModuleMap.cpp
+S2E_PLUGINS += s2e/Plugins/MemoryMap.cpp
+S2E_PLUGINS += s2e/Plugins/KeyValueStore.cpp
+
+# Windows guests support
+S2E_PLUGINS += s2e/Plugins/WindowsInterceptor/WindowsInterceptor.cpp
+S2E_PLUGINS += s2e/Plugins/WindowsInterceptor/BlueScreenInterceptor.cpp
+S2E_PLUGINS += s2e/Plugins/WindowsInterceptor/WindowsCrashDumpGenerator.cpp
+S2E_PLUGINS += s2e/Plugins/WindowsMonitor2.cpp
+S2E_PLUGINS += s2e/Plugins/GuestCodePatching.cpp
+
+# Linux guests support
+S2E_PLUGINS += s2e/Plugins/Linux/LinuxMonitor.cpp
+S2E_PLUGINS += s2e/Plugins/RawMonitor.cpp
+
+# CGC support
+# TODO: make recipes plugins generic
+S2E_PLUGINS += s2e/Plugins/CGC/CGCMonitor.cpp
+S2E_PLUGINS += s2e/Plugins/CGC/POVGenerator.cpp
+S2E_PLUGINS += s2e/Plugins/CGC/ExploitGenerator.cpp
+S2E_PLUGINS += s2e/Plugins/CGC/Recipe/Recipe.cpp
+S2E_PLUGINS += s2e/Plugins/CGC/Recipe/RecipeDescriptor.cpp
+S2E_PLUGINS += s2e/Plugins/CGC/Recipe/MemoryHelpers.cpp
+
+# Tracing plugins
+S2E_PLUGINS += s2e/Plugins/ExecutionTracers/ExecutionTracer.cpp
+S2E_PLUGINS += s2e/Plugins/ExecutionTracers/UserSpaceTracer.cpp
+S2E_PLUGINS += s2e/Plugins/ExecutionTracers/ModuleTracer.cpp
+S2E_PLUGINS += s2e/Plugins/ExecutionTracers/EventTracer.cpp
+S2E_PLUGINS += s2e/Plugins/ExecutionTracers/TestCaseGenerator.cpp
+S2E_PLUGINS += s2e/Plugins/ExecutionTracers/MemoryTracer.cpp
+S2E_PLUGINS += s2e/Plugins/ExecutionTracers/InstructionCounter.cpp
+S2E_PLUGINS += s2e/Plugins/ExecutionTracers/TranslationBlockTracer.cpp
+S2E_PLUGINS += s2e/Plugins/ExecutionTracers/ExceptionTracer.cpp
+S2E_PLUGINS += s2e/Plugins/ExecutionTracers/StateSwitchTracer.cpp
+S2E_PLUGINS += s2e/Plugins/ExecutionTracers/TBCoverageTracer.cpp
+S2E_PLUGINS += s2e/Plugins/ExecutionTracers/NGramCoverage.cpp
+
+# Symbolic hardware, disabled for now
+# S2E_PLUGINS += s2e/Plugins/SymbolicHardware/SymbolicHardware.cpp
+# S2E_PLUGINS += s2e/Plugins/SymbolicHardware/SymbolicDeviceDescriptor.cpp
+# S2E_PLUGINS += s2e/Plugins/SymbolicHardware/IsaSymbolicDevice.cpp
+# S2E_PLUGINS += s2e/Plugins/SymbolicHardware/PciSymbolicDevice.cpp
+# S2E_PLUGINS += s2e/Plugins/SymbolicHardware/VfioSymbolicDevice.cpp
+# S2E_PLUGINS += s2e/Plugins/SymbolicHardware/UsbSymbolicDevice.cpp
+# S2E_PLUGINS += s2e/Plugins/SymbolicHardware/InterruptInjector.cpp
+
+# Searchers
+S2E_PLUGINS += s2e/Plugins/Searchers/MultiSearcher.cpp
+S2E_PLUGINS += s2e/Plugins/Searchers/CooperativeSearcher.cpp
+S2E_PLUGINS += s2e/Plugins/Searchers/MergingSearcher.cpp
+S2E_PLUGINS += s2e/Plugins/Searchers/LoopExitSearcher.cpp
+S2E_PLUGINS += s2e/Plugins/Searchers/CUPASearcher.cpp
+S2E_PLUGINS += s2e/Plugins/Searchers/SeedSearcher.cpp
+S2E_PLUGINS += s2e/Plugins/Searchers/PathSearcher.cpp
+
+# Static analysis
+S2E_PLUGINS += s2e/Plugins/ControlFlowGraph.cpp
+S2E_PLUGINS += s2e/Plugins/StaticLibraryFunctionModels.cpp
+S2E_PLUGINS += s2e/Plugins/LoopDetector.cpp
+S2E_PLUGINS += s2e/Plugins/EdgeDetector.cpp
+S2E_PLUGINS += s2e/Plugins/EdgeKiller.cpp
+
+# Code coverage
+S2E_PLUGINS += s2e/Plugins/BasicBlockCoverage.cpp
+S2E_PLUGINS += s2e/Plugins/TranslationBlockCoverage.cpp
+S2E_PLUGINS += s2e/Plugins/EdgeCoverage.cpp
+
+# Misc plugins
+S2E_PLUGINS += s2e/Plugins/Example.cpp
+S2E_PLUGINS += s2e/Plugins/CacheSim.cpp
+S2E_PLUGINS += s2e/Plugins/MemoryChecker.cpp
+S2E_PLUGINS += s2e/Plugins/StackChecker.cpp
+# S2E_PLUGINS += s2e/Plugins/SymbolicPointerTickler.cpp
+S2E_PLUGINS += s2e/Plugins/ResourceMonitor.cpp
+S2E_PLUGINS += s2e/Plugins/ForkLimiter.cpp
+S2E_PLUGINS += s2e/Plugins/CallSiteMonitor.cpp
+S2E_PLUGINS += s2e/Plugins/Debugger.cpp
+S2E_PLUGINS += s2e/Plugins/CodeSelector.cpp
+S2E_PLUGINS += s2e/Plugins/FunctionMonitor.cpp
+S2E_PLUGINS += s2e/Plugins/FunctionMonitor2.cpp
+S2E_PLUGINS += s2e/Plugins/StackMonitor.cpp
+S2E_PLUGINS += s2e/Plugins/StackClustering.cpp
+S2E_PLUGINS += s2e/Plugins/LibraryCallMonitor.cpp
+S2E_PLUGINS += s2e/Plugins/CodePatternFinder.cpp
+
+# Cyberhaven-specific plugins
+S2E_PLUGINS += s2e/Plugins/SimpleCFIChecker.cpp
+S2E_PLUGINS += s2e/Plugins/SimpleCFIReportCollector.cpp
+S2E_PLUGINS += s2e/Plugins/SyscallReportCollector.cpp
+S2E_PLUGINS += s2e/Plugins/Screenshot.cpp
+S2E_PLUGINS += s2e/Plugins/WebServiceInterface.cpp
+S2E_PLUGINS += s2e/Plugins/ExecutionStatisticsCollector.cpp
+S2E_PLUGINS += s2e/Plugins/BugCollector.cpp
+
+# Lua bindings
+S2E_PLUGINS += s2e/Plugins/LuaBindings.cpp
+S2E_PLUGINS += s2e/Plugins/LuaModuleDescriptor.cpp
+S2E_PLUGINS += s2e/Plugins/LuaS2EExecutionState.cpp
+S2E_PLUGINS += s2e/Plugins/LuaS2EExecutionStateMemory.cpp
+S2E_PLUGINS += s2e/Plugins/LuaS2EExecutionStateRegisters.cpp
+S2E_PLUGINS += s2e/Plugins/LuaS2E.cpp
+S2E_PLUGINS += s2e/Plugins/LuaFunctionAnnotation.cpp
+S2E_PLUGINS += s2e/Plugins/LuaInstructionAnnotation.cpp
+S2E_PLUGINS += s2e/Plugins/LuaAnnotationState.cpp
+S2E_PLUGINS += s2e/Plugins/LuaExpression.cpp
+S2E_PLUGINS += s2e/Plugins/LuaCoreEvents.cpp
+
+SOURCES = s2e-kvm-interface.c   \
+          s2e-kvm-trace.c       \
+          s2e-kvm-qemu-stubs.c  \
+          s2e-qemu-interface.c  \
+          libs2e.c
+
+VPATH := $(SRC_DIR)
+LDLIBS := -lvmi -lm -lbfd -lglib-2.0 -ldl -lpthread -lrt -lopcodes          \
+           $(KLEE_LIBS) $(KLEE_LDFLAGS) -ltcg  $(LLVM_LDFLAGS) $(LLVM_LIBS) \
+          -L$(Z3_LIB) -lz3 -L$(LIBLUA_LIB) -L$(BUILD_DIR)/libq/src          \
+          -L$(BUILD_DIR)/libcoroutine/src -L$(BUILD_DIR)/libse/src          \
+          -Llibtcg/src -Llibcpu/src -lq -lcoroutine -lse -llua  -lbsd       \
+          -lgomp -lboost_serialization -lboost_system
+WERROR_FLAGS := -Werror -Wno-zero-length-array -Wno-c99-extensions          \
+                -Wno-gnu-anonymous-struct -Wno-nested-anon-types            \
+                -Wno-extended-offsetof -Wno-gnu-statement-expression        \
+                -Wno-gnu-zero-variadic-macro-arguments -Wno-vla-extension   \
+                -Wno-covered-switch-default -Wno-shift-negative-value       \
+                -Wno-deprecated-register
+
+CFLAGS := $(OPTFLAGS) -Wall $(WERROR_FLAGS) -g -m64 -fPIC                   \
+          -I. -I$(BUILD_DIR) -I$(SRC_DIR)                                   \
+          -I$(SRC_DIR)/libcpu/include/fpu -I$(SRC_DIR)/libcpu/include       \
+          -I$(SRC_DIR)/libcpu/include/target-i386                           \
+          -I$(SRC_DIR)/libq/include -I$(SRC_DIR)/libtcg/include             \
+          -I$(SRC_DIR)/libcoroutine/include -I$(SRC_DIR)/libse/include      \
+          -I$(SRC_DIR)/qapi -I/usr/include/glib-2.0                         \
+          -I/usr/lib/x86_64-linux-gnu/glib-2.0/include                      \
+          -DCONFIG_LIBS2E -D__STDC_FORMAT_MACROS -D_GNU_SOURCE -DNEED_CPU_H \
+          -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE                        \
+          -DTARGET_PHYS_ADDR_BITS=64                                        \
+          -fno-strict-aliasing -fexceptions
+
+ifeq ($(SYMBEX_CONFIG), 1)
+SOURCES := $(SOURCES) $(S2E_SOURCES) $(S2E_PLUGINS)
+CFLAGS := $(CFLAGS) -DCONFIG_SYMBEX
+endif
+
+ifeq ($(CONFIG_SYMBEX_MP), 1)
+CFLAGS := $(CFLAGS) -DCONFIG_SYMBEX_MP
+endif
+
+LDFLAGS := -L$(LIBVMI_LIB)
+
+CXXFLAGS := $(OPTFLAGS) -I$(LIBVMI_SRC)/include -I$(LIBLUA_LIB)             \
+            $(LLVM_CXXFLAGS) $(KLEE_CXXFLAGS) -fexceptions -std=c++11       \
+            $(WERROR_FLAGS)
+
+_OBJECTS := $(SOURCES:.c=.o)
+_OBJECTS := $(_OBJECTS:.asm=.o)
+_OBJECTS := $(_OBJECTS:.cpp=.o)
+OBJECTS := $(_OBJECTS:$(SRC_DIR)=$(BUILD_DIR))
+
+TARGETS := libs2e.so libs2e.a test
+
+ifeq ($(SYMBEX_CONFIG), 1)
+ifeq ($(SYMBEX_CONFIG_MP), 1)
+	BC_TARGETS := op_helper.bc.$(TARGET_ARCH)
+else
+	BC_TARGETS := op_helper_sp.bc.$(TARGET_ARCH)
+endif
+endif
+
+all: $(TARGETS) $(BC_TARGETS)
+
+FORCE:
+
+libtcg/src/libtcg.a: FORCE
+	$(MAKE) -C libtcg
+
+libcpu/src/op_helper.bc libcpu/src/libcpu.a: FORCE
+	$(MAKE) -C libcpu
+
+libs2e.so: $(OBJECTS) libcpu/src/libcpu.a libtcg/src/libtcg.a
+	$(CC) $(CCFLAGS) $(LDFLAGS) -Wl,--version-script=$(SRC_DIR)/mapfile -shared $(CFLAGS) $^ -o $@ $(LDLIBS)
+
+libs2e.a:  $(OBJECTS) libcpu/src/libcpu.a libtcg/src/libtcg.a
+	@echo "[$(AR)] $@"
+	@$(AR) rcs $@ $^
+
+test: test.o libs2e.a libcpu/src/libcpu.a libtcg/src/libtcg.a
+	$(CC) $(CCFLAGS) $(CFLAGS) $(LDFLAGS) $^ -o $@ $(LDLIBS) -lstdc++
+
+%.o : %.c
+	@echo "[$(CC)] $@"
+	@$(CC) $^ -c -g  $(CFLAGS) -o $@
+
+%.o : %.cpp
+	@echo "[$(CC)] $@"
+	@$(CC) $^ -c -g  $(CFLAGS) $(CXXFLAGS) -o $@
+
+%.o: %.asm
+	@echo "[$(AS)] $@"
+	@$(AS) -f elf64 -o $@ $^
+
+%.bc: %.c
+	@echo "[$(CC)] $@"
+	@$(CC) $^ -c -g  $(CFLAGS) -Wno-unused-function -DSYMBEX_LLVM_LIB -emit-llvm -o $@
+
+op_helper_sp.bc.$(TARGET_ARCH) op_helper.bc.$(TARGET_ARCH): libcpu/src/op_helper.bc
+	cp -v $^ $@
+
+clean:
+	rm -f $(OBJECTS) test *.a *.so *.o *.bc*
+	cd libtcg && make clean
+	cd libcpu && make clean

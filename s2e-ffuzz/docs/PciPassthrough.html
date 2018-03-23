@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.11: http://docutils.sourceforge.net/" />
+<title>Using Real PCI Devices with S2E</title>
+<link rel="stylesheet" href="./s2e.css" type="text/css" />
+</head>
+<body>
+<div class="document" id="using-real-pci-devices-with-s2e">
+<h1 class="title">Using Real PCI Devices with S2E</h1>
+
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#setting-up-the-host" id="id1">Setting up the Host</a></li>
+<li><a class="reference internal" href="#launching-s2e" id="id2">Launching S2E</a></li>
+<li><a class="reference internal" href="#quirks" id="id3">Quirks</a></li>
+</ul>
+</div>
+<div class="section" id="setting-up-the-host">
+<h1>Setting up the Host</h1>
+<p>You need:</p>
+<ul class="simple">
+<li>Intel VT-d (IOMMU)</li>
+<li>A recent Linux kernel (3.12 or later, earlier versions might cause kernel panics)</li>
+<li>Add <tt class="docutils literal">intel_iommu=on</tt> to the boot parameters</li>
+</ul>
+</div>
+<div class="section" id="launching-s2e">
+<h1>Launching S2E</h1>
+<pre class="literal-block">
+#Initialize the passthrough driver
+modprobe vfio_pci
+
+#Ethernet NIC on the Lenovo W520 (use ``lspci -vv`` to find where the device is plugged in)
+DEVICE=00:19.0
+
+#See Documentation/vfio.txt in the kernel source for more info about this
+echo &quot;8086 1502&quot; &gt; /sys/bus/pci/drivers/vfio-pci/new_id
+
+#This needs root, unless you grant the permissions to devices in /dev/vfio/
+sudo $QEMU -m 512 -boot c -net user -hda image.raw.s2e -device vfio-pci,host=$DEVICE
+</pre>
+</div>
+<div class="section" id="quirks">
+<h1>Quirks</h1>
+<ul>
+<li><p class="first"><tt class="docutils literal">intel_iommu=on</tt> floods the syslog with a ton of errors, slowing down the system
+This happens, e.g., on a Lenovo W520 laptop. Some devices poke memory without having
+the rights for that. Identify the device and disable it in the BIOS (e.g., the FireWire
+port in the case of the Lenovo).</p>
+</li>
+<li><p class="first">The device is left in a metastate and doesn't seem to work anymore after S2E is closed.
+The following appears in the syslog:</p>
+<pre class="literal-block">
+$ sudo modprobe e1000e
+$ dmesg | tail -n 6
+[100860.732579] e1000e: Intel(R) PRO/1000 Network Driver - 2.1.4-k
+[100860.732588] e1000e: Copyright(c) 1999 - 2012 Intel Corporation.
+[100860.732659] e1000e 0000:00:19.0: setting latency timer to 64
+[100860.732861] e1000e 0000:00:19.0: Interrupt Throttling Rate (ints/sec) set to dynamic conservative mode
+[100860.732952] e1000e 0000:00:19.0: irq 55 for MSI/MSI-X
+[100860.832252] e1000e: probe of 0000:00:19.0 failed with error -3
+</pre>
+<p>Solution:</p>
+<pre class="literal-block">
+rmmod vfio_iommu_type1 vfio_pci vfio
+sleep 1
+
+echo 1 &gt; /sys/bus/pci/devices/0000:00:19.0/reset
+sleep 1
+
+echo 1 &gt; /sys/bus/pci/devices/0000:00:19.0/remove
+sleep 1
+
+#Here, suspend the machine, and turn it back on.
+#It should reset the device properly.
+
+echo 1 &gt; /sys/bus/pci/rescan
+sleep 1
+
+sudo modprobe e1000e
+dmesg | tail -n 10
+</pre>
+</li>
+</ul>
+</div>
+</div>
+<div class="footer">
+<hr class="footer" />
+<a class="reference external" href="PciPassthrough.rst">View document source</a>.
+
+</div>
+</body>
+</html>

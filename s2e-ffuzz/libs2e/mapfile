@@ -1,0 +1,11 @@
+{
+    global:
+         open64;
+         close64;
+         write;
+         sigaction;
+         ioctl;
+         __libc_start_main;
+    local:
+            *;
+};

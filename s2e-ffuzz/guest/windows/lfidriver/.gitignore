@@ -1,0 +1,11 @@
+*.obj
+*.sys
+*.pdb
+*.xml
+objfre*
+*.err
+*.log
+*.wrn
+driver/objchk_*
+libs2e/objchk_*
+testctl/objchk_*

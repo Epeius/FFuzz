@@ -1,0 +1,56 @@
+# -*- Makefile -*-
+
+include $(LEVEL)/Makefile.config
+
+# Include LLVM's Master Makefile config and rules.
+include $(LLVM_OBJ_ROOT)/Makefile.config
+include $(LLVM_SRC_ROOT)/Makefile.rules
+
+
+# LLVMCC was added in 2.7.
+ifeq ($(LLVMCC),)
+LLVMCC := $(LLVMGCC)
+LLVMCXX := $(LLVMGXX)
+endif
+
+COVERAGE_ROOT := $(PROJ_OBJ_ROOT)/coverage
+GUEST_TARGET:=i386
+
+ifeq ($(ENABLE_OPTIMIZED),1)
+KLEE_LIBS=$(KLEE_OBJ_ROOT)/Release+Asserts/lib
+S2E_TARGET_OBJ := $(S2E_OBJ_RELEASE)/$(GUEST_TARGET)-s2e-softmmu/s2e/
+TESTS := $(COVERAGE_ROOT)/Release+Asserts
+else
+KLEE_LIBS=$(KLEE_OBJ_ROOT)/Debug+Asserts/lib
+S2E_TARGET_OBJ := $(S2E_OBJ_DEBUG)/$(GUEST_TARGET)-s2e-softmmu/s2e/
+TESTS := $(COVERAGE_ROOT)/Debug+Asserts
+endif
+
+coverage-report:: unittests lib
+	cd $(COVERAGE_ROOT) && $(PROJ_SRC_ROOT)/gencoverage.sh \
+		--coverage-data $(COVERAGE_ROOT)/data
+
+COV_FLAGS := -fprofile-arcs -ftest-coverage
+
+QEMU_CFLAGS := -I$(S2E_SRC_ROOT)/  -I$(S2E_SRC_ROOT)/fpu -I$(S2E_SRC_ROOT)/target-i386 -DNEED_CPU_H -I$(S2E_SRC_ROOT)/include $(COV_FLAGS)
+QEMU_CFLAGS += -I$(S2E_TARGET_OBJ)/../../ -I$(S2E_TARGET_OBJ)/../
+
+
+CPP.Flags += $(QEMU_CFLAGS) -I$(PROJ_SRC_ROOT)/ -I$(KLEE_SRC_ROOT)/include
+CPP.Flags += -I$(LLVM_SRC_ROOT)/utils/unittest/googletest/include/ -I$(GMOCK_BUILD_ROOT)/include
+CPP.Flags += -std=c++11 -Wno-gnu -Wno-extended-offsetof
+CPP.Flags += $(COV_FLAGS)
+CPP.Flags += $(GLIB_CFLAGS)
+
+LD.Flags += -L$(STP_ROOT)/lib -L$(CLANG_LIBPROF_PATH)
+CPP.Flags += -I$(STP_ROOT)/include
+
+LD.Flags += $(STP_LDFLAGS)
+CXX.Flags += $(STP_CFLAGS)
+
+CXX.Flags += -I$(LIBVMI_SRC_ROOT)/include -L$(LIBVMI_OBJ_ROOT)
+
+
+LIBS += -L$(KLEE_LIBS) $(STP_LDFLAGS) $(GLIB_LIBS) -L$(GMOCK_BUILD_ROOT)/lib -lvmi -lbfd -lgmock -lgtest -lboost_serialization -lboost_system -lboost_regex -lrt -fsanitize=address
+
+

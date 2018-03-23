@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.11: http://docutils.sourceforge.net/" />
+<title>Exponential Analysis Speedup with State Merging</title>
+<link rel="stylesheet" href="./s2e.css" type="text/css" />
+</head>
+<body>
+<div class="document" id="exponential-analysis-speedup-with-state-merging">
+<h1 class="title">Exponential Analysis Speedup with State Merging</h1>
+
+<p>Symbolic execution can produce an exponential number of paths, considerably slowing down analysis.
+When S2E encounters a branch that depends on
+a symbolic condition and both outcomes are possible, S2E forks the current execution path in two.
+This process can repeat recursively, resulting in an exponential number of paths.</p>
+<p>The following piece of code demonstrates the problem. It is a simplification of the
+<tt class="docutils literal">ShiftInBits()</tt> function of the Intel e100bex NIC driver from the Windows WDK.
+It consists of a loop that reads a value from a hardware register bit-by-bit.</p>
+<div class="highlight"><pre><span class="kt">uint16_t</span> <span class="nf">ShiftInBits</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kt">uint16_t</span> <span class="n">value</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">*</span> <span class="mi">8</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">value</span> <span class="o">&lt;&lt;=</span> <span class="mi">1</span><span class="p">;</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">read_register</span><span class="p">())</span> <span class="p">{</span>
+            <span class="n">value</span> <span class="o">|=</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">value</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+<p>On each iteration, <tt class="docutils literal">read_register()</tt> returns a fresh symbolic value, causing
+a fork at the conditional statement. Since there are 16 iterations in total,
+this amounts to 65,536 execution states.</p>
+<p>If we look closely, every forked path in the function above differs only by one bit,
+set to zero or one depending on the register value. If S2E could merge both paths back
+together while remembering that small difference, there would remain only one path
+at the end of the function, reducing by four orders of magnitude the number of paths
+to explore.</p>
+<div class="section" id="using-state-merging-in-s2e">
+<h1>Using State Merging in S2E</h1>
+<p>To use state merging in S2E, first enable the <tt class="docutils literal">MergingSearcher</tt> plugin.</p>
+<div class="highlight"><pre> <span class="c1">-- File: config.lua</span>
+ <span class="n">s2e</span> <span class="o">=</span> <span class="p">{</span>
+     <span class="n">kleeArgs</span> <span class="o">=</span> <span class="p">{</span>
+         <span class="c1">-- needed to avoid merge failures due to different shared-concrete objects:</span>
+         <span class="s2">&quot;</span><span class="s">--state-shared-memory=true&quot;</span>
+     <span class="p">}</span>
+ <span class="p">}</span>
+
+<span class="n">plugins</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="s2">&quot;</span><span class="s">BaseInstructions&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;</span><span class="s">MergingSearcher&quot;</span>
+<span class="p">}</span>
+</pre></div>
+<p>Then, compile the following program, then run it in S2E:</p>
+<div class="highlight"><pre><span class="cp">#include &lt;s2e.h&gt;</span>
+
+<span class="kt">uint16_t</span> <span class="nf">ShiftInBits</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kt">uint16_t</span> <span class="n">value</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">*</span> <span class="mi">8</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">value</span> <span class="o">&lt;&lt;=</span> <span class="mi">1</span><span class="p">;</span>
+
+        <span class="cm">/* Simulates read_register() */</span>
+        <span class="kt">uint8_t</span> <span class="n">reg</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="n">s2e_make_concolic</span><span class="p">(</span><span class="o">&amp;</span><span class="n">reg</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">reg</span><span class="p">),</span> <span class="s">&quot;reg&quot;</span><span class="p">);</span>
+
+        <span class="n">s2e_disable_all_apic_interrupts</span><span class="p">();</span>
+        <span class="n">s2e_merge_group_begin</span><span class="p">();</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">reg</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">value</span> <span class="o">|=</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="n">s2e_merge_group_end</span><span class="p">();</span>
+        <span class="n">s2e_enable_all_apic_interrupts</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">value</span><span class="p">;</span>
+<span class="p">}</span>
+
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">uint16_t</span> <span class="n">value</span> <span class="o">=</span> <span class="n">ShiftInBits</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">value</span> <span class="o">==</span> <span class="mh">0xabcd</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">s2e_printf</span><span class="p">(</span><span class="s">&quot;found it</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+<ul class="simple">
+<li>How many paths do you observe?</li>
+<li>Comment out calls to <tt class="docutils literal">s2e_merge_group_begin()</tt> and <tt class="docutils literal">s2e_merge_group_end()</tt>.
+How does this affect the number of paths?</li>
+</ul>
+</div>
+<div class="section" id="state-merging-api">
+<h1>State Merging API</h1>
+<p>The S2E state merging API offers two calls: <tt class="docutils literal">s2e_merge_group_begin()</tt> and <tt class="docutils literal">s2e_merge_group_end()</tt>.</p>
+<p>The subtree that begins at <tt class="docutils literal">s2e_merge_group_begin()</tt> and whose leaves end at <tt class="docutils literal">s2e_merge_group_end()</tt> is merged
+into one path. The <tt class="docutils literal">MergingSearcher</tt> behaves as follows:</p>
+<p>The searcher suspends the first path (path A) that reaches <tt class="docutils literal">s2e_merge_group_begin()</tt>.</p>
+<ul class="simple">
+<li>If path A did not fork any other path between <tt class="docutils literal">s2e_merge_group_begin()</tt> and <tt class="docutils literal">s2e_merge_group_end()</tt>,
+there is nothing to merge, and the searcher resumes path A normally.</li>
+<li>If path A forked other paths (e.g., B and C), the searcher schedules another path.
+The scheduled path could be B, C, or any other path outside the subtree to be merged.</li>
+<li>When path B reaches <tt class="docutils literal">s2e_merge_group_end()</tt>, <tt class="docutils literal">MergingSearcher</tt> merges it with A, then kills B.</li>
+<li>When path C reaches <tt class="docutils literal">s2e_merge_group_end()</tt>, <tt class="docutils literal">MergingSearcher</tt> merges it with A+B, then kills C.</li>
+</ul>
+</div>
+<div class="section" id="limitations">
+<h1>Limitations</h1>
+<ul class="simple">
+<li>It is not possible to nest pairs of <tt class="docutils literal">s2e_merge_group_begin()</tt> and <tt class="docutils literal">s2e_merge_group_end()</tt>.</li>
+<li>S2E must be running in concrete mode when merging states (<tt class="docutils literal">s2e_merge_group_end()</tt> ensures that it is the case).</li>
+<li>The set of symbolic memory objects must be identical in all states that are going to be merged.
+For example, there shouldn't be calls to <tt class="docutils literal">s2e_make_concolic</tt> between <tt class="docutils literal">s2e_merge_group_begin()</tt> and <tt class="docutils literal">s2e_merge_group_end()</tt>.</li>
+<li>It is not possible to merge two states if their concrete CPU state differs (e.g., floating point or MMX registers, program counter, etc.).</li>
+<li><tt class="docutils literal">s2e_disable_all_apic_interrupts()</tt> and <tt class="docutils literal">s2e_enable_all_apic_interrupts()</tt> ensure that the concrete
+state is not clobbered needlessly by interrupts. The direct consequence is that the merged subtree cannot call
+into the environment (no syscalls, etc.). Not disabling interrupts will make merging much harder because the side effects
+of the interrupt handlers and those of the OS will have to be merged as well. If the side effects affected the concrete CPU state,
+merging will fail.</li>
+</ul>
+</div>
+</div>
+<div class="footer">
+<hr class="footer" />
+<a class="reference external" href="StateMerging.rst">View document source</a>.
+
+</div>
+</body>
+</html>

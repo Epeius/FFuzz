@@ -1,0 +1,26 @@
+TARGETNAME=testctl
+TARGETTYPE=PROGRAM
+
+C_DEFINES=$(C_DEFINES) -D_WIN32WIN_ -DPSAPI_VERSION=1 -D_UNICODE -DUNICODE
+
+MSC_WARNING_LEVEL=/WX /W4
+
+UMTYPE=console
+USE_MSVCRT=1
+
+TARGETLIBS=\
+	..\libs2e\obj$(BUILD_ALT_DIR)\*\libs2e.lib \
+	$(DDK_LIB_PATH)\psapi.lib \
+	$(DDK_LIB_PATH)\advpack.lib \
+	$(DDK_LIB_PATH)\setupapi.lib \
+	$(DDK_LIB_PATH)\ole32.lib \
+	$(DDK_LIB_PATH)\uuid.lib \
+	$(DDK_LIB_PATH)\shlwapi.lib \
+	$(DDK_LIB_PATH)\user32.lib
+
+INCLUDES=..\libs2e	/I..\driver
+
+SOURCES=\
+    testctl.c autoconfirm.c device.cpp debugger.c inf.cpp netcfgapi.cpp dse.c watchdog.c
+
+

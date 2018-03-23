@@ -1,0 +1,16 @@
+msgr3en.dll
+msgr3fr.dll
+oart.dll
+winspool.drv
+srvcli.dll
+dwrite.dll
+mscss7en.dll
+dnsapi.dll
+davclnt.dll
+ppcore.dll
+wmvcore.dll
+msxml6.dll
+vbe7.dll
+vbe6.dll
+msmpeg2adec.dll
+msmpeg2vdec.dll

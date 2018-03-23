@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <USER_C_FLAGS Condition="'$(OVERRIDE_USER_C_FLAGS)'!='true'">/wd4201</USER_C_FLAGS>
+    <TARGETNAME Condition="'$(OVERRIDE_TARGETNAME)'!='true'">lfidriver</TARGETNAME>
+    <TARGETPATH Condition="'$(OVERRIDE_TARGETPATH)'!='true'">obj</TARGETPATH>
+    <TARGETTYPE Condition="'$(OVERRIDE_TARGETTYPE)'!='true'">DRIVER</TARGETTYPE>
+    <SOURCES Condition="'$(OVERRIDE_SOURCES)'!='true'">main.c hook.c modules.c winxp-ndis-miniport.c winxp-ndis-protocol.c winxp-ntoskrnl.c</SOURCES>
+    <INCLUDES Condition="'$(OVERRIDE_INCLUDES)'!='true'">..\libs2e</INCLUDES>
+    <C_DEFINES Condition="'$(OVERRIDE_C_DEFINES)'!='true'">-DUNICODE -DSTRICT</C_DEFINES>
+    <TARGETLIBS Condition="'$(OVERRIDE_TARGETLIBS)'!='true'">$(DDK_LIB_PATH)\ndis.lib ..\libs2e\obj$(BUILD_ALT_DIR)\*\libs2e.lib $(DDK_LIB_PATH)\wdmsec.lib</TARGETLIBS>
+  </PropertyGroup>
+</Project>

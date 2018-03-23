@@ -1,0 +1,8 @@
+#!/bin/bash
+
+HOST=dslab-vader1.epfl.ch
+REMOTE_USER=zamfir
+LOCAL_PATH=/Users/zamf/cyberhaven
+REMOTE_PATH=/home/zamfir/cyberhaven
+REMOTE_BUILD_PATH=$REMOTE_PATH/build-3.2-websvc
+

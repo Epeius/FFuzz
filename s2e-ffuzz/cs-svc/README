@@ -1,0 +1,53 @@
+Constraint Solving Service
+==========================
+
+The service provides a wrapper over the Z3's built-in shell.
+Accepts SMTLIBv2 commands.
+
+Initialization
+--------------
+
+Upon connection, the client must initialize the solver session
+by using either one of these two commands:
+
+   command:
+   (get-new-session)
+
+   reply:
+   new session id
+
+or
+
+   command:
+   (set-new-session id)
+   
+   reply:
+   id
+
+set-new-session takes as parameter an id that was obtained by a prior
+call to get-new-session.
+
+Sessions allow to close/open connections to the service without
+losing the Z3 state. When the client drops its connection to the service,
+the service will keep Z3 open for a while.
+
+Commands
+--------
+
+After initialization, the client can send any commands accepted by Z3.
+
+The typical command is (check-sat), which returns sat or unsat depending
+on the satisfiability of the current set of constraints.
+
+Another command is (get-value), which returns the concrete value for
+a given expression. The service intercepts this command and formats
+the reply so that clients can parse it more easily.
+
+  command:
+  (get-value ...)
+
+  reply:
+  variable_name index concrete_byte
+
+Issuing (exit) will terminate the solver instance.
+

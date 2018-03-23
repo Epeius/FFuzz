@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.11: http://docutils.sourceforge.net/" />
+<title>Using External Constraint Solvers</title>
+<link rel="stylesheet" href="./s2e.css" type="text/css" />
+</head>
+<body>
+<div class="document" id="using-external-constraint-solvers">
+<h1 class="title">Using External Constraint Solvers</h1>
+
+<p>S2E uses the built-in STP solver by default, which provides good performance for a variety of programs.</p>
+<p>However, if a given test generates queries that are too hard for STP to solve, it is possible
+to use other constraint solvers, such as Z3.</p>
+<p>S2E provides a service-like interface to interact with other solvers.
+The communication between S2E and the solver is done over a socket.</p>
+<div class="section" id="launching-the-constraint-solving-service">
+<h1>Launching the Constraint Solving Service</h1>
+<p>S2E provides a sample Python script that wraps Z3's built-in shell in a simple Web interface.
+The script is located in <tt class="docutils literal"><span class="pre">$S2EDIR/s2e/cs-svc/cs-svc.py</span></tt>. More details about the
+protocol can be found in <tt class="docutils literal"><span class="pre">$S2EDIR/s2e/cs-svc/README</span></tt>.</p>
+<pre class="literal-block">
+$ ./cs-svc.py -z3 '/path/to/z3' -port 1234
+</pre>
+</div>
+<div class="section" id="configuring-an-external-solver">
+<h1>Configuring an External Solver</h1>
+<p>The following code snippet instructs S2E to connect to the constraint solving service
+running on <tt class="docutils literal">localhost:1234</tt> and log all the queries (<tt class="docutils literal"><span class="pre">external-solver-debug</span></tt>).</p>
+<p>In addition to that, S2E will run the solver in <em>incremental</em> mode. Incremental mode
+greatly speeds up the exploration of deep execution paths by not sending the whole set
+of constraints on each solver query.</p>
+<div class="highlight"><pre><span class="c1">-- File: config.lua</span>
+<span class="n">s2e</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="n">kleeArgs</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="o">...</span>
+    <span class="s2">&quot;</span><span class="s">--use-external-solver&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;</span><span class="s">--external-solver-host=localhost&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;</span><span class="s">--external-solver-port=1234&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;</span><span class="s">--external-solver-incremental&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;</span><span class="s">--external-solver-debug&quot;</span><span class="p">,</span>
+    <span class="o">...</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="footer">
+<hr class="footer" />
+<a class="reference external" href="ExternalSolvers.rst">View document source</a>.
+
+</div>
+</body>
+</html>

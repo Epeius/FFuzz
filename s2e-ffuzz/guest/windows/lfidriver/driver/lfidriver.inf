@@ -1,0 +1,68 @@
+[Version]
+Signature="$WINDOWS NT$"
+Class=lfidriver
+ClassGuid={7C0FFE40-A685-4198-8A71-C2F803CB2AD5}
+Provider=%EPFL%
+DriverVer=01/16/2013,1.0.0000.1
+CatalogFile=lfidriver.cat
+
+[DestinationDirs]
+DefaultDestDir = 12
+
+; ================= Class section =====================
+
+[ClassInstall32]
+Addreg=lfidriverClassReg     
+
+[lfidriverClassReg]
+HKR,,,0,%ClassName%
+HKR,,Icon,,-5
+HKR,,DeviceCharacteristics,0x10001,0x100     ;Use same security checks on relative opens
+HKR,,Security,,"D:P(A;;GA;;;SY)(A;;GA;;;BA)" ;Allow generic all access to system and built-in Admin. 
+                                             ;This one overrides the security set by the driver
+
+;*****************************************
+; lfidriver Device  Install Section
+;*****************************************
+
+[Manufacturer]
+%StdMfg%=Standard,nt$ARCH$
+
+[Standard.nt$ARCH$]
+; DisplayName       		Section           DeviceId
+; -----------       		-------           --------
+%LFIDevice.DeviceDesc%=lfidriver_Device, {7C0FFE40-A685-4198-8A71-C2F803CB2AD5}\lfidriver
+
+[lfidriver_Device.NT]
+CopyFiles=lfidriver_Device.NT.Copy
+
+[lfidriver_Device.NT.Copy]
+lfidriver.sys
+
+;-------------- Service installation
+
+[lfidriver_Device.NT.Services]
+AddService = lfidriver, %SPSVCINST_ASSOCSERVICE%, lfidriver_Service_Inst
+
+[lfidriver_Service_Inst]
+DisplayName    = %LFIDevice.DeviceDesc%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START 
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\lfidriver.sys
+LoadOrderGroup = Extended Base
+
+
+[SourceDisksNames]
+1 = %DiskId1%,,,""
+
+[SourceDisksFiles]
+lfidriver.sys  = 1,,
+
+[Strings]
+SPSVCINST_ASSOCSERVICE= 0x00000002
+EPFL = "EPFL"
+StdMfg = "(Standard system devices)"
+ClassName = "LFIDRIVER"
+DiskId1 = "S2E Fault Injection Installation Disk #1"
+LFIDevice.DeviceDesc = "S2E Fault Injection Driver"
